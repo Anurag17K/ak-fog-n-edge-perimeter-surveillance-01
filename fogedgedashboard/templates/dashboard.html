@@ -26,13 +26,22 @@
         th { color: #58a6ff; }
         
         /* Auto-refresh toggle */
-        .controls { text-align: right; margin-bottom: 10px; }
+        .controls { text-align: right; margin-bottom: 10px; display: flex; justify-content: flex-end; align-items: center; }
     </style>
 </head>
 <body>
 
     <div class="controls">
-        <label><input type="checkbox" id="autoRefresh" checked> Auto-Refresh (5s)</label>
+        <span style="color: #8b949e; margin-right: 15px; font-size: 14px;">
+             Last Updated: <strong>{{ last_updated|date:"H:i:s" }}</strong>
+        </span>
+        
+        <button id="overrideBtn" onclick="toggleSystem()" 
+                style="background-color: #d9534f; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 15px;">
+            🛑 DEACTIVATE SYSTEM
+        </button>
+
+        <label style="font-size: 14px;"><input type="checkbox" id="autoRefresh" checked> Auto-Refresh (5s)</label>
     </div>
 
     <h2>🛡️ Unified Threat Management - Cloud Dashboard</h2>
@@ -136,6 +145,42 @@
                 plugins: { legend: { labels: { color: '#c9d1d9' } } }
             }
         });
+
+        // --- NEW BIDIRECTIONAL COMMAND & CONTROL LOGIC ---
+        let systemActive = true;
+
+        function toggleSystem() {
+            systemActive = !systemActive;
+            const btn = document.getElementById('overrideBtn');
+            const refreshCheckbox = document.getElementById('autoRefresh');
+            
+            if (systemActive) {
+                btn.innerHTML = "🛑 DEACTIVATE SYSTEM";
+                btn.style.backgroundColor = "#d9534f"; // Red
+                refreshCheckbox.checked = true; // Turn auto-refresh back on
+            } else {
+                btn.innerHTML = "✅ REACTIVATE SYSTEM";
+                btn.style.backgroundColor = "#5cb85c"; // Green
+                refreshCheckbox.checked = false; // Pause refresh so button state doesn't reset
+            }
+
+            // Fire payload to Django
+            fetch('/api/toggle-override/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ system_active: systemActive })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Cloud responded:", data);
+            })
+            .catch(error => {
+                console.error("Error sending command:", error);
+                alert("Failed to send command to Cloud!");
+            });
+        }
 
         // Auto-refresh logic
         setInterval(function() {

@@ -1,0 +1,1 @@
+web: gunicorn cloud_backend.wsgi:application

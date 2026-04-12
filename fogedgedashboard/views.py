@@ -3,6 +3,9 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import SecurityAlert
+from django.utils import timezone
+import boto3
+from django.conf import settings
 
 @csrf_exempt
 def ingest_data(request):
@@ -61,6 +64,41 @@ def dashboard_view(request):
         'rf_data': rf_data,
         'seismic_data': seismic_data,
         'total_threats': total_threats,
-        'false_alarms': false_alarms_filtered
+        'false_alarms': false_alarms_filtered,
+        'last_updated': timezone.now()
     }
     return render(request, 'dashboard.html', context)
+
+@csrf_exempt
+def toggle_override(request):
+    """Sends a Command & Control message down to the local Fog Node via AWS IoT."""
+    if request.method == 'POST':
+        try:
+            payload = json.loads(request.body)
+            # Expecting a payload like: {"system_active": false}
+            is_active = payload.get("system_active", True)
+            
+            # Create a message payload for the Fog Node
+            command_message = json.dumps({"system_active": is_active})
+            
+            # Initialize the AWS IoT Data client
+            # (boto3 will automatically use your local AWS CLI credentials for now)
+            iot_client = boto3.client('iot-data', region_name='us-east-1') # Update region if needed
+            
+            # Publish the command to a specific control topic
+            iot_client.publish(
+                topic='perimeter/commands/override',
+                qos=1,
+                payload=command_message
+            )
+            
+            status_text = "ACTIVATED" if is_active else "DEACTIVATED"
+            print(f"📡 CLOUD COMMAND SENT: System {status_text}")
+            
+            return JsonResponse({"message": "Command transmitted successfully", "status": 200})
+            
+        except Exception as e:
+            print(f"Error sending command: {e}")
+            return JsonResponse({"error": str(e)}, status=500)
+            
+    return JsonResponse({"error": "Invalid request"}, status=400)
