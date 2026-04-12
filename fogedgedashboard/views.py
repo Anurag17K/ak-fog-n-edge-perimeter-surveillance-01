@@ -9,28 +9,48 @@ from django.conf import settings
 
 @csrf_exempt
 def ingest_data(request):
+    """
+    Handles both the AWS IoT HTTPS Destination confirmation handshake 
+    and the ingestion of real-time threat data from the Fog Node.
+    """
     if request.method == 'POST':
         try:
             payload = json.loads(request.body)
             
-            # Only save actual threats to the database to save space
-            if payload.get("alert") != "None":
+            # --- 1. AWS IoT HTTPS CONFIRMATION HANDSHAKE ---
+            # AWS sends a confirmationToken when you first create or verify the destination.
+            # We must return a 200 OK for the destination to become 'Enabled'.
+            if 'confirmationToken' in payload:
+                print(f"✅ AWS IoT Handshake Received. Token: {payload['confirmationToken']}")
+                return JsonResponse({"status": "confirmed"}, status=200)
+
+            # --- 2. THREAT DATA INGESTION LOGIC ---
+            # Only save to the database if the Fog Brain has identified a real alert.
+            alert_type = payload.get("alert")
+            
+            if alert_type and alert_type != "None":
                 raw_data = payload.get("raw_data_sample", {})
                 
-                # Save to database
+                # Create the record in your RDS database
                 SecurityAlert.objects.create(
-                    alert_type=payload.get("alert"),
-                    status=payload.get("status"),
+                    alert_type=alert_type,
+                    status=payload.get("status", "No Status Provided"),
                     rf_signal=raw_data.get("rf_signal_strength_dbm", 0),
                     acoustic_freq=raw_data.get("acoustic_frequency_hz", 0),
                     seismic_vib=raw_data.get("seismic_vibration_g", 0),
                     object_mass=raw_data.get("thermal_object_mass_kg", 0)
                 )
-                print(f"💾 SAVED TO DB: {payload.get('alert')}")
+                print(f"💾 SAVED TO DB: {alert_type}")
 
             return JsonResponse({"message": "Data ingested successfully", "status": 200})
+
         except json.JSONDecodeError:
-            return JsonResponse({"error": "Invalid JSON"}, status=400)
+            return JsonResponse({"error": "Invalid JSON payload"}, status=400)
+        except Exception as e:
+            # Catch-all for database errors or missing keys
+            print(f"❌ Ingestion Error: {str(e)}")
+            return JsonResponse({"error": str(e)}, status=500)
+
     return JsonResponse({"error": "Only POST methods are allowed"}, status=405)
 
 # --- NEW DASHBOARD VIEW ---
