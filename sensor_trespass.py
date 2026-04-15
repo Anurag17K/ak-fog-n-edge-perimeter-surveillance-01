@@ -3,7 +3,7 @@ import time, json, random, socket
 UDP_IP, UDP_PORT = "127.0.0.1", 5005
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-print("👣 [EDGE] Seismic Array Active. Monitoring for Footsteps...")
+print("[EDGE] Seismic Array Active. Monitoring for Footsteps...")
 
 while True:
     trigger = random.randint(1, 10)
