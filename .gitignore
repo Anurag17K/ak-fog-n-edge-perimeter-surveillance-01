@@ -3,3 +3,63 @@
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
+
+# ========================
+# Python Core
+# ========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# ========================
+# Virtual Environments
+# ========================
+venv/
+env/
+.venv/
+themevenv/
+venvtrips/       # Your specific travelogue environment
+
+# ========================
+# Django & Databases
+# ========================
+# NOTE: db.sqlite3 is INTENTIONALLY NOT IGNORED so it pushes to GitHub & AWS
+db.sqlite3-journal # Catches temporary SQLite lock files
+*.log
+staticfiles/
+media/
+
+# ========================
+# Security & Environment
+# ========================
+.env
+.env.* # Catches any local backup env files
+
+# ========================
+# CI/CD & Deployment
+# ========================
+deploy.zip       # Prevents pushing the local zip artifact to GitHub
+
+# ========================
+# AWS Elastic Beanstalk
+# ========================
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+!.elasticbeanstalk/config.yml
+
+# ========================
+# IDE & OS Files
+# ========================
+.DS_Store
+Thumbs.db
+.vscode/
+.c9/
+.idea/
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
