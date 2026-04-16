@@ -29,4 +29,5 @@ jobs:
           aws-region: us-east-1
 
       - name: Deploy to Elastic Beanstalk
+        working-directory: ./cloud_backend
         run: eb deploy fogandedge-env-01
