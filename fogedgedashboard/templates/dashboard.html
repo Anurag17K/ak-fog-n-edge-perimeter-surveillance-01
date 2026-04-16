@@ -337,8 +337,12 @@
         let isSessionActive = false;
 
         function startTestSession() {
-            sessionStartTime = Date.now(); 
+            // Subtract 2000ms (2s) to prevent client/server clock desync
+            sessionStartTime = Date.now() - 2000; 
             isSessionActive = true;
+            
+            // SAVE STATE: Tell browser to remember session if we reload
+            sessionStorage.setItem('testSessionStart', sessionStartTime);
             
             document.getElementById('subTotal').innerText = '0';
             document.getElementById('subDrones').innerText = '0';
@@ -349,14 +353,68 @@
             
             document.getElementById('testSessionModal').style.display = 'block';
             document.body.style.overflow = 'hidden'; // Prevent background scrolling
+
+            fetchSubDashboardData(); // Fetch immediately on open
         }
 
         function endTestSession() {
             isSessionActive = false;
             sessionStartTime = null;
+            
+            // CLEAR STATE: Forget the session
+            sessionStorage.removeItem('testSessionStart'); 
+            
             document.getElementById('testSessionModal').style.display = 'none';
             document.body.style.overflow = 'auto';
         }
+
+        function fetchSubDashboardData() {
+            if (!isSessionActive || !sessionStartTime) return;
+
+            // Cache buster forces the browser to ask server for new data
+            const cacheBuster = Date.now();
+            
+            fetch(`{% url "get_session_data" %}?since=${sessionStartTime}&_t=${cacheBuster}`, {
+                cache: 'no-store'
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('subTotal').innerText = data.total_threats;
+                document.getElementById('subDrones').innerText = data.drones;
+                document.getElementById('subVehicles').innerText = data.vehicles;
+                document.getElementById('subTrespass').innerText = data.trespass;
+                document.getElementById('subFence').innerText = data.fence;
+
+                const tbody = document.getElementById('subAlertsTableBody');
+                tbody.innerHTML = ''; 
+                
+                data.alerts.forEach(alert => {
+                    let tagClass = 'tag-fence';
+                    if (alert.alert_type.includes('Drone')) tagClass = 'tag-drone';
+                    else if (alert.alert_type.includes('Trespass')) tagClass = 'tag-trespass';
+                    else if (alert.alert_type.includes('Vehicle')) tagClass = 'tag-vehicle';
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td class="td-muted">${alert.timestamp}</td><td><span class="tag ${tagClass}">${alert.alert_type}</span></td><td>${alert.status}</td><td class="td-mono">${alert.rf_signal}</td><td class="td-mono">${alert.seismic_vib}</td>`;
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(error => console.error("Error fetching sub-dashboard data:", error));
+        }
+
+        // ON LOAD: Check if session was running before reload
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedSessionStart = sessionStorage.getItem('testSessionStart');
+            if (savedSessionStart) {
+                sessionStartTime = parseInt(savedSessionStart);
+                isSessionActive = true;
+                
+                document.getElementById('testSessionModal').style.display = 'block';
+                document.body.style.overflow = 'hidden';
+                
+                fetchSubDashboardData(); // Populate the restored modal
+            }
+        });
 
         // ==========================================
         // 5. MASTER AJAX POLLING
@@ -364,7 +422,7 @@
         setInterval(() => {
             // A. Update Main Dashboard
             if(document.getElementById('autoRefresh').checked) {
-                fetch('{% url "get_dashboard_data" %}')
+                fetch(`{% url "get_dashboard_data" %}?_t=${Date.now()}`, { cache: 'no-store' })
                     .then(response => response.json())
                     .then(newData => {
                         trendData = newData.trend_payload;
@@ -404,33 +462,11 @@
                     .catch(error => console.error("Error fetching main data:", error));
             }
 
-            // B. Update Sub-Dashboard (if active)
-            if (isSessionActive && sessionStartTime) {
-                fetch(`{% url "get_session_data" %}?since=${sessionStartTime}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        document.getElementById('subTotal').innerText = data.total_threats;
-                        document.getElementById('subDrones').innerText = data.drones;
-                        document.getElementById('subVehicles').innerText = data.vehicles;
-                        document.getElementById('subTrespass').innerText = data.trespass;
-                        document.getElementById('subFence').innerText = data.fence;
-
-                        const tbody = document.getElementById('subAlertsTableBody');
-                        tbody.innerHTML = ''; 
-                        
-                        data.alerts.forEach(alert => {
-                            let tagClass = 'tag-fence';
-                            if (alert.alert_type.includes('Drone')) tagClass = 'tag-drone';
-                            else if (alert.alert_type.includes('Trespass')) tagClass = 'tag-trespass';
-                            else if (alert.alert_type.includes('Vehicle')) tagClass = 'tag-vehicle';
-
-                            const tr = document.createElement('tr');
-                            tr.innerHTML = `<td class="td-muted">${alert.timestamp}</td><td><span class="tag ${tagClass}">${alert.alert_type}</span></td><td>${alert.status}</td><td class="td-mono">${alert.rf_signal}</td><td class="td-mono">${alert.seismic_vib}</td>`;
-                            tbody.appendChild(tr);
-                        });
-                    })
-                    .catch(error => console.error("Error fetching sub-dashboard data:", error));
+            // B. Update Sub-Dashboard (Only if it's open)
+            if (isSessionActive) {
+                fetchSubDashboardData();
             }
+            
         }, 5000);
     </script>
 </body>
