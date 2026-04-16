@@ -18,20 +18,16 @@ def ingest_data(request):
             payload = json.loads(request.body)
             
             # --- 1. AWS IoT HTTPS CONFIRMATION HANDSHAKE ---
-            # AWS sends a confirmationToken when you first create or verify the destination.
-            # We must return a 200 OK for the destination to become 'Enabled'.
             if 'confirmationToken' in payload:
-                print(f"✅ AWS IoT Handshake Received. Token: {payload['confirmationToken']}")
+                print(f"[SYSTEM] AWS IoT Handshake Received. Token: {payload['confirmationToken']}")
                 return JsonResponse({"status": "confirmed"}, status=200)
 
             # --- 2. THREAT DATA INGESTION LOGIC ---
-            # Only save to the database if the Fog Brain has identified a real alert.
             alert_type = payload.get("alert")
             
             if alert_type and alert_type != "None":
                 raw_data = payload.get("raw_data_sample", {})
                 
-                # Create the record in your RDS database
                 SecurityAlert.objects.create(
                     alert_type=alert_type,
                     status=payload.get("status", "No Status Provided"),
@@ -40,41 +36,32 @@ def ingest_data(request):
                     seismic_vib=raw_data.get("seismic_vibration_g", 0),
                     object_mass=raw_data.get("thermal_object_mass_kg", 0)
                 )
-                print(f"💾 SAVED TO DB: {alert_type}")
+                print(f"[DATABASE] Saved record: {alert_type}")
 
             return JsonResponse({"message": "Data ingested successfully", "status": 200})
 
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON payload"}, status=400)
         except Exception as e:
-            # Catch-all for database errors or missing keys
-            print(f"❌ Ingestion Error: {str(e)}")
+            print(f"[ERROR] Ingestion Error: {str(e)}")
             return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse({"error": "Only POST methods are allowed"}, status=405)
 
-# --- NEW DASHBOARD VIEW ---
 def dashboard_view(request):
-    # 1. Get the latest 15 alerts for the table and charts
     latest_alerts = SecurityAlert.objects.all().order_by('-timestamp')[:15]
-    
-    # We need to reverse them so the line chart reads left-to-right (oldest to newest)
     chart_alerts = list(reversed(latest_alerts))
     
-    # 2. Extract data for the Line Chart
     time_labels = [alert.timestamp.strftime("%H:%M:%S") for alert in chart_alerts]
     rf_data = [alert.rf_signal for alert in chart_alerts]
     seismic_data = [alert.seismic_vib for alert in chart_alerts]
 
-    # 3. Count alerts for the Doughnut chart
     drone_count = SecurityAlert.objects.filter(alert_type="Airspace Drone Breach").count()
     trespass_count = SecurityAlert.objects.filter(alert_type="Ground Trespass").count()
     vehicle_count = SecurityAlert.objects.filter(alert_type="Unauthorized Vehicle Approach").count()
     fence_count = SecurityAlert.objects.filter(alert_type="Fence Tampering / Cutting").count()
     
-    # Total threats saved to cloud
     total_threats = SecurityAlert.objects.count()
-    # Mocking the filtered false alarms (Assuming 96% of edge data is filtered out)
     false_alarms_filtered = total_threats * 24 
 
     context = {
@@ -95,17 +82,11 @@ def toggle_override(request):
     if request.method == 'POST':
         try:
             payload = json.loads(request.body)
-            # Expecting a payload like: {"system_active": false}
             is_active = payload.get("system_active", True)
             
-            # Create a message payload for the Fog Node
             command_message = json.dumps({"system_active": is_active})
+            iot_client = boto3.client('iot-data', region_name='us-east-1')
             
-            # Initialize the AWS IoT Data client
-            # (boto3 will automatically use your local AWS CLI credentials for now)
-            iot_client = boto3.client('iot-data', region_name='us-east-1') # Update region if needed
-            
-            # Publish the command to a specific control topic
             iot_client.publish(
                 topic='perimeter/commands/override',
                 qos=1,
@@ -113,12 +94,12 @@ def toggle_override(request):
             )
             
             status_text = "ACTIVATED" if is_active else "DEACTIVATED"
-            print(f"📡 CLOUD COMMAND SENT: System {status_text}")
+            print(f"[COMMAND] Cloud command transmitted: System {status_text}")
             
             return JsonResponse({"message": "Command transmitted successfully", "status": 200})
             
         except Exception as e:
-            print(f"Error sending command: {e}")
+            print(f"[ERROR] Error sending command: {e}")
             return JsonResponse({"error": str(e)}, status=500)
             
     return JsonResponse({"error": "Invalid request"}, status=400)

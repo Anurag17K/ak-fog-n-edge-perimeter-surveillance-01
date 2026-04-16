@@ -6,7 +6,7 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 print("[EDGE] Seismic Array Active. Monitoring for Footsteps...")
 
 while True:
-    trigger = random.randint(1, 10)
+    trigger = random.randint(1, 15)
     if trigger == 1:
         rf = random.uniform(-90.0, -80.0)
         acoustic = random.randint(50, 200)

@@ -6,7 +6,7 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 print("[EDGE] Airspace Radar Active. Scanning for Drones...")
 
 while True:
-    trigger = random.randint(1, 10) # 10% chance of threat
+    trigger = random.randint(1, 15) # 10% chance of threat
     if trigger == 1:
         rf = random.uniform(-40.0, -20.0)
         acoustic = random.randint(4000, 6000)

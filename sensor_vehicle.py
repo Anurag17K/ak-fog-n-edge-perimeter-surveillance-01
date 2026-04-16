@@ -6,7 +6,7 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 print("[EDGE] Vehicle Monitor Active. Detecting heavy approaches...")
 
 while True:
-    trigger = random.randint(1, 10)
+    trigger = random.randint(1, 15)
     if trigger == 1:
         rf = random.uniform(-100.0, -85.0)
         acoustic = random.randint(80, 120)
