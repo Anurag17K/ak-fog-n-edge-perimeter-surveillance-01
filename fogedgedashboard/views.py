@@ -8,6 +8,7 @@ from django.utils import timezone
 import boto3
 from django.conf import settings
 
+
 @csrf_exempt
 def ingest_data(request):
     if request.method == 'POST':
@@ -43,10 +44,11 @@ def ingest_data(request):
 
     return JsonResponse({"error": "Only POST methods are allowed"}, status=405)
 
-def dashboard_view(request):
+def get_dashboard_metrics():
+    """Helper function to gather all metrics so we don't duplicate code."""
     today = timezone.now()
     
-    # 1. WEEK DATA (Last 7 Days)
+    # 1. WEEK DATA
     week_labels = [(today - datetime.timedelta(days=i)).strftime("%b %d") for i in range(6, -1, -1)]
     week_data = {'Drones': [0]*7, 'Vehicles': [0]*7, 'Trespassers': [0]*7, 'Fence': [0]*7}
     week_alerts = SecurityAlert.objects.filter(timestamp__gte=today - datetime.timedelta(days=7))
@@ -58,7 +60,7 @@ def dashboard_view(request):
             elif "Trespass" in a.alert_type: week_data['Trespassers'][idx] += 1
             elif "Fence" in a.alert_type: week_data['Fence'][idx] += 1
 
-    # 2. MONTH DATA (Last 30 Days)
+    # 2. MONTH DATA
     month_labels = [(today - datetime.timedelta(days=i)).strftime("%b %d") for i in range(29, -1, -1)]
     month_data = {'Drones': [0]*30, 'Vehicles': [0]*30, 'Trespassers': [0]*30, 'Fence': [0]*30}
     month_alerts = SecurityAlert.objects.filter(timestamp__gte=today - datetime.timedelta(days=30))
@@ -70,7 +72,7 @@ def dashboard_view(request):
             elif "Trespass" in a.alert_type: month_data['Trespassers'][idx] += 1
             elif "Fence" in a.alert_type: month_data['Fence'][idx] += 1
 
-    # 3. YEAR DATA (Last 12 Months)
+    # 3. YEAR DATA
     year_labels = []
     year_data = {'Drones': [0]*12, 'Vehicles': [0]*12, 'Trespassers': [0]*12, 'Fence': [0]*12}
     for i in range(11, -1, -1):
@@ -88,7 +90,6 @@ def dashboard_view(request):
             elif "Trespass" in a.alert_type: year_data['Trespassers'][idx] += 1
             elif "Fence" in a.alert_type: year_data['Fence'][idx] += 1
 
-    # Package all trend data into one JSON object for the frontend
     trend_payload = {
         "week": {"labels": week_labels, "data": week_data},
         "month": {"labels": month_labels, "data": month_data},
@@ -97,21 +98,61 @@ def dashboard_view(request):
 
     # KPIs and Table Data
     latest_alerts = SecurityAlert.objects.all().order_by('-timestamp')[:15]
-    drone_count = SecurityAlert.objects.filter(alert_type__icontains="Drone").count()
-    trespass_count = SecurityAlert.objects.filter(alert_type__icontains="Trespass").count()
-    vehicle_count = SecurityAlert.objects.filter(alert_type__icontains="Vehicle").count()
-    fence_count = SecurityAlert.objects.filter(alert_type__icontains="Fence").count()
+    
+    # Pre-format alerts for JSON (Django models aren't JSON serializable by default)
+    alerts_list = [{
+        "timestamp": a.timestamp.strftime("%H:%M:%S"),
+        "alert_type": a.alert_type,
+        "status": a.status,
+        "rf_signal": a.rf_signal,
+        "seismic_vib": a.seismic_vib
+    } for a in latest_alerts]
+
     total_threats = SecurityAlert.objects.count()
 
-    context = {
-        'alerts': latest_alerts,
-        'doughnut_data': [drone_count, trespass_count, vehicle_count, fence_count],
-        'trend_payload': json.dumps(trend_payload),
+    return {
+        'alerts_queryset': latest_alerts, # Used by the initial HTML render
+        'alerts_json': alerts_list,       # Used by the AJAX poll
+        'doughnut_data': [
+            SecurityAlert.objects.filter(alert_type__icontains="Drone").count(),
+            SecurityAlert.objects.filter(alert_type__icontains="Trespass").count(),
+            SecurityAlert.objects.filter(alert_type__icontains="Vehicle").count(),
+            SecurityAlert.objects.filter(alert_type__icontains="Fence").count()
+        ],
+        'trend_payload': trend_payload,
         'total_threats': total_threats,
         'false_alarms': total_threats * 24,
-        'last_updated': today
+        'last_updated': today.strftime("%H:%M:%S")
+    }
+
+# ==========================================
+# VIEW 1: Renders the initial HTML page
+# ==========================================
+def dashboard_view(request):
+    data = get_dashboard_metrics()
+    context = {
+        'alerts': data['alerts_queryset'],
+        'doughnut_data': data['doughnut_data'],
+        'trend_payload': json.dumps(data['trend_payload']),
+        'total_threats': data['total_threats'],
+        'false_alarms': data['false_alarms'],
+        'last_updated': data['last_updated']
     }
     return render(request, 'dashboard.html', context)
+
+# ==========================================
+# VIEW 2: Provides fresh JSON to the frontend every 5 seconds
+# ==========================================
+def api_get_dashboard_data(request):
+    data = get_dashboard_metrics()
+    return JsonResponse({
+        'alerts': data['alerts_json'],
+        'doughnut_data': data['doughnut_data'],
+        'trend_payload': data['trend_payload'],
+        'total_threats': data['total_threats'],
+        'false_alarms': data['false_alarms'],
+        'last_updated': data['last_updated']
+    })
 
 @csrf_exempt
 def toggle_override(request):
