@@ -1,65 +1,43 @@
-
-# Elastic Beanstalk Files
-.elasticbeanstalk/*
-!.elasticbeanstalk/*.cfg.yml
-!.elasticbeanstalk/*.global.yml
-
-# ========================
-# Python Core
-# ========================
+# =========================
+# Python & Django
+# =========================
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
-*.pyc
+*$py.class
+*.so
+db.sqlite3
+db.sqlite3-journal
 
-# ========================
-# Virtual Environments
-# ========================
-venv/
-env/
-.venv/
-themevenv/
-venvtrips/       # Your specific travelogue environment
+# Local environment variables (Never commit secrets!)
+.env
+.env.local
 
-# ========================
-# Django & Databases
-# ========================
-# NOTE: db.sqlite3 is INTENTIONALLY NOT IGNORED so it pushes to GitHub & AWS
-db.sqlite3-journal # Catches temporary SQLite lock files
-*.log
+# Static/Media files generated during deployment
 staticfiles/
 media/
 
-# ========================
-# Security & Environment
-# ========================
-.env
-.env.* # Catches any local backup env files
+# =========================
+# Virtual Environments
+# =========================
+venv/
+env/
+ENV/
+*.venv/
 
-# ========================
-# CI/CD & Deployment
-# ========================
-deploy.zip       # Prevents pushing the local zip artifact to GitHub
-
-# ========================
+# =========================
 # AWS Elastic Beanstalk
-# ========================
+# =========================
+# Ignore all AWS EB logs and local states
 .elasticbeanstalk/*
-!.elasticbeanstalk/*.cfg.yml
-!.elasticbeanstalk/*.global.yml
+# CRITICAL: Allow the EB config file so GitHub Actions knows your Application Name
 !.elasticbeanstalk/config.yml
+!.elasticbeanstalk/*.global.yml
 
-# ========================
-# IDE & OS Files
-# ========================
+# =========================
+# IDEs & OS Files
+# =========================
+.vscode/
+.idea/
+*.swp
 .DS_Store
 Thumbs.db
-.vscode/
-.c9/
-.idea/
-# Elastic Beanstalk Files
-.elasticbeanstalk/*
-!.elasticbeanstalk/*.cfg.yml
-!.elasticbeanstalk/*.global.yml
-
