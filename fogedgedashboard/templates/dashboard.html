@@ -49,8 +49,6 @@
 
         /* Header Controls */
         .header-controls { display: flex; justify-content: flex-end; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
-        .timestamp { color: var(--text-muted); font-size: 14px; margin-right: auto; }
-        .timestamp strong { color: var(--text-main); }
 
         /* Buttons & Inputs */
         .btn { padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; border: none; transition: opacity 0.2s; }
@@ -105,7 +103,9 @@
 
     <main class="dashboard-container">
         <header class="header-controls">
-            <span class="timestamp">Last Updated: <strong>{{ last_updated }}</strong></span>
+            <span style="color: #8b949e; margin-right: auto; font-size: 14px;">
+                Last Updated: <strong id="lastUpdatedText">{{ last_updated|date:"H:i:s" }}</strong>
+            </span>
             
             <button class="btn btn-blue" onclick="startTestSession()">
                 START TEST RUN
@@ -337,11 +337,11 @@
         let isSessionActive = false;
 
         function startTestSession() {
-            // Subtract 2000ms (2s) to prevent client/server clock desync
-            sessionStartTime = Date.now() - 2000; 
+            // Added a 60-second buffer to bypass server/laptop clock sync issues
+            sessionStartTime = Date.now() - 60000; 
             isSessionActive = true;
             
-            // SAVE STATE: Tell browser to remember session if we reload
+            // SAVE STATE
             sessionStorage.setItem('testSessionStart', sessionStartTime);
             
             document.getElementById('subTotal').innerText = '0';
@@ -352,18 +352,15 @@
             document.getElementById('subAlertsTableBody').innerHTML = '';
             
             document.getElementById('testSessionModal').style.display = 'block';
-            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            document.body.style.overflow = 'hidden';
 
-            fetchSubDashboardData(); // Fetch immediately on open
+            fetchSubDashboardData();
         }
 
         function endTestSession() {
             isSessionActive = false;
             sessionStartTime = null;
-            
-            // CLEAR STATE: Forget the session
             sessionStorage.removeItem('testSessionStart'); 
-            
             document.getElementById('testSessionModal').style.display = 'none';
             document.body.style.overflow = 'auto';
         }
@@ -371,9 +368,7 @@
         function fetchSubDashboardData() {
             if (!isSessionActive || !sessionStartTime) return;
 
-            // Cache buster forces the browser to ask server for new data
             const cacheBuster = Date.now();
-            
             fetch(`{% url "get_session_data" %}?since=${sessionStartTime}&_t=${cacheBuster}`, {
                 cache: 'no-store'
             })
@@ -402,17 +397,15 @@
             .catch(error => console.error("Error fetching sub-dashboard data:", error));
         }
 
-        // ON LOAD: Check if session was running before reload
+        // ON LOAD: Restore session if reloading page
         window.addEventListener('DOMContentLoaded', () => {
             const savedSessionStart = sessionStorage.getItem('testSessionStart');
             if (savedSessionStart) {
                 sessionStartTime = parseInt(savedSessionStart);
                 isSessionActive = true;
-                
                 document.getElementById('testSessionModal').style.display = 'block';
                 document.body.style.overflow = 'hidden';
-                
-                fetchSubDashboardData(); // Populate the restored modal
+                fetchSubDashboardData(); 
             }
         });
 
@@ -428,7 +421,10 @@
                         trendData = newData.trend_payload;
                         totalIncidents = newData.doughnut_data.reduce((a, b) => a + b, 0);
 
-                        document.querySelector('.timestamp strong').innerText = newData.last_updated;
+                        // ROBUST TIMESTAMP UPDATE
+                        const timeText = newData.last_updated ? newData.last_updated : new Date().toLocaleTimeString();
+                        document.getElementById('lastUpdatedText').innerText = timeText;
+
                         document.getElementById('mainTotalThreats').innerText = newData.total_threats;
                         document.getElementById('mainFalseAlarms').innerText = newData.false_alarms;
 
@@ -462,7 +458,7 @@
                     .catch(error => console.error("Error fetching main data:", error));
             }
 
-            // B. Update Sub-Dashboard (Only if it's open)
+            // B. Update Sub-Dashboard
             if (isSessionActive) {
                 fetchSubDashboardData();
             }

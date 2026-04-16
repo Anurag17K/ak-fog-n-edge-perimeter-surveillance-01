@@ -18,4 +18,4 @@ while True:
 
     payload = {"rf_dbm": round(rf, 2), "acoustic_hz": acoustic, "seismic_g": round(seismic, 2), "mass_kg": round(mass, 2)}
     sock.sendto(json.dumps(payload).encode(), (UDP_IP, UDP_PORT))
-    time.sleep(4)
+    time.sleep(10)

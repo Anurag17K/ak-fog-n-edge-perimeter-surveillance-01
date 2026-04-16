@@ -187,9 +187,16 @@ def api_get_session_data(request):
         return JsonResponse({"error": "Missing timestamp"}, status=400)
         
     try:
-        # Convert the JavaScript timestamp (milliseconds) to a Python aware datetime
-        dt = datetime.datetime.fromtimestamp(int(since_ts) / 1000.0, tz=timezone.utc)
-    except ValueError:
+        # Convert the JavaScript timestamp to a UTC aware datetime
+        dt = datetime.datetime.fromtimestamp(int(since_ts) / 1000.0, tz=datetime.timezone.utc)
+        
+        # CRITICAL FIX: If your Django settings use naive datetimes (USE_TZ=False), 
+        # strip the timezone info so it doesn't crash the database query.
+        if not getattr(settings, 'USE_TZ', True):
+            dt = dt.replace(tzinfo=None)
+            
+    except Exception as e:
+        print(f"[ERROR] Session Time Conversion: {e}")
         return JsonResponse({"error": "Invalid timestamp"}, status=400)
 
     # Filter alerts that happened AFTER the button was clicked
