@@ -27,11 +27,6 @@
         
         /* UI Controls & Buttons */
         .controls { text-align: right; margin-bottom: 10px; display: flex; justify-content: flex-end; align-items: center; }
-        
-        .btn-group { display: flex; gap: 10px; margin-bottom: 15px; }
-        .btn-filter { background-color: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: 0.2s; }
-        .btn-filter:hover { background-color: #30363d; }
-        .btn-filter.active { background-color: #58a6ff; color: #0d1117; border-color: #58a6ff; font-weight: bold; }
 
         /* Info Panel for Pie Chart */
         .info-panel { margin-top: auto; padding: 15px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; font-size: 13px; color: #8b949e; }
@@ -76,26 +71,26 @@
     </div>
     
     <div class="chart-row">
+        
         <div class="box line-chart-box">
-            <h3 style="margin-top: 0; color: #8b949e;">Recent Telemetry Spikes (Last 15 Events)</h3>
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <div class="btn-group" style="margin-bottom: 0;">
-                    <button class="btn-filter active" id="btn-both" onclick="filterLineChart('both')">View Both Metrics</button>
-                    <button class="btn-filter" id="btn-rf" onclick="filterLineChart('rf')">RF Signal Only</button>
-                    <button class="btn-filter" id="btn-seismic" onclick="filterLineChart('seismic')">Seismic Only</button>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                <div>
+                    <h3 style="margin-top: 0; color: #8b949e;">Threat Volume Trends</h3>
+                    <p style="font-size: 12px; color: #8b949e; margin-top: 0px; margin-bottom: 0px;">
+                        Click on a threat type in the legend to toggle its visibility.
+                    </p>
                 </div>
                 
-                <select id="threatFilter" onchange="filterByThreat(this.value)" style="background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px;">
-                    <option value="All">All Threats</option>
-                    <option value="Drone">Drones</option>
-                    <option value="Trespass">Trespassers</option>
-                    <option value="Vehicle">Vehicles</option>
-                    <option value="Fence">Fence Tampering</option>
+                <select id="timeScaleFilter" onchange="changeTimeScale(this.value)" style="background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px;">
+                    <option value="week">Past 7 Days</option>
+                    <option value="month">Past 30 Days</option>
+                    <option value="year">Past 12 Months</option>
                 </select>
             </div>
-
-            <canvas id="telemetryLineChart"></canvas>
+            
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="telemetryLineChart"></canvas>
+            </div>
         </div>
         
         <div class="box doughnut-box">
@@ -142,16 +137,13 @@
     </div>
 
     <script>
-        // Data from Django
+        // ==========================================
+        // 1. DOUGHNUT CHART & DRILL-DOWN LOGIC
+        // ==========================================
         const doughnutData = {{ doughnut_data|safe }};
-        const timeLabels = {{ time_labels|safe }};
-        const rfData = {{ rf_data|safe }};
-        const seismicData = {{ seismic_data|safe }};
-        
         const threatLabels = ['Drones', 'Trespassers', 'Vehicles', 'Fence Tampering'];
         const totalIncidents = doughnutData.reduce((a, b) => a + b, 0);
 
-        // 1. Doughnut Chart with Click Interaction
         const ctxDoughnut = document.getElementById('incidentDoughnutChart').getContext('2d');
         const doughnutChart = new Chart(ctxDoughnut, {
             type: 'doughnut',
@@ -192,7 +184,6 @@
             }
         });
 
-        // Update the info panel below the pie chart
         function updateDetailsPanel(index) {
             const panel = document.getElementById('chart-details');
             const label = threatLabels[index];
@@ -222,80 +213,62 @@
             panel.style.borderColor = "#30363d";
         }
 
-        // 2. Multi-Axis Line Chart
+
+        // ==========================================
+        // 2. MULTI-SCALE TREND CHART LOGIC
+        // ==========================================
+        const trendData = {{ trend_payload|safe }};
         const ctxLine = document.getElementById('telemetryLineChart').getContext('2d');
-        const lineChart = new Chart(ctxLine, {
+        
+        let lineChart = new Chart(ctxLine, {
             type: 'line',
             data: {
-                labels: timeLabels,
+                labels: trendData.week.labels,
                 datasets: [
-                    {
-                        label: 'RF Signal (dBm)',
-                        data: rfData,
-                        borderColor: '#58a6ff',
-                        backgroundColor: 'rgba(88, 166, 255, 0.1)',
-                        yAxisID: 'y',
-                        fill: true, tension: 0.3, pointRadius: 3, pointHoverRadius: 6
-                    },
-                    {
-                        label: 'Seismic Vibration (G)',
-                        data: seismicData,
-                        borderColor: '#ff7b72',
-                        backgroundColor: 'rgba(255, 123, 114, 0.1)',
-                        yAxisID: 'y1',
-                        fill: true, tension: 0.3, pointRadius: 3, pointHoverRadius: 6
-                    }
+                    { label: 'Drones', data: trendData.week.data.Drones, borderColor: '#58a6ff', backgroundColor: 'rgba(88, 166, 255, 0.1)', fill: true, tension: 0.4, pointRadius: 3 },
+                    { label: 'Vehicles', data: trendData.week.data.Vehicles, borderColor: '#ff7b72', backgroundColor: 'rgba(255, 123, 114, 0.1)', fill: true, tension: 0.4, pointRadius: 3 },
+                    { label: 'Trespassers', data: trendData.week.data.Trespassers, borderColor: '#d29922', backgroundColor: 'rgba(210, 153, 34, 0.1)', fill: true, tension: 0.4, pointRadius: 3 },
+                    { label: 'Fence Tampering', data: trendData.week.data.Fence, borderColor: '#e34c26', backgroundColor: 'rgba(227, 76, 38, 0.1)', fill: true, tension: 0.4, pointRadius: 3 }
                 ]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false },
                 scales: {
-                    x: { ticks: { color: '#8b949e', maxTicksLimit: 8 }, grid: { color: '#30363d' } },
-                    y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'RF (dBm)', color: '#58a6ff' }, ticks: { color: '#58a6ff' }, grid: { color: '#30363d' } },
-                    y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Seismic (G)', color: '#ff7b72' }, ticks: { color: '#ff7b72' }, grid: { drawOnChartArea: false } }
+                    x: { ticks: { color: '#8b949e', maxTicksLimit: 12 }, grid: { color: '#30363d' } },
+                    y: { beginAtZero: true, ticks: { color: '#8b949e', precision: 0 }, grid: { color: '#30363d' }, title: { display: true, text: 'Incident Count', color: '#8b949e' } }
                 },
-                plugins: { legend: { display: false } } // Hidden legend, controlled by custom buttons
+                plugins: { legend: { display: true, position: 'top', labels: { color: '#c9d1d9', usePointStyle: true, padding: 15 } } }
             }
         });
 
-        // Logic to toggle line chart datasets
-        function filterLineChart(viewType) {
-            // Update button styles
-            document.getElementById('btn-both').classList.remove('active');
-            document.getElementById('btn-rf').classList.remove('active');
-            document.getElementById('btn-seismic').classList.remove('active');
-            document.getElementById(`btn-${viewType}`).classList.add('active');
-
-            // Update chart visibility
-            if (viewType === 'both') {
-                lineChart.setDatasetVisibility(0, true);
-                lineChart.setDatasetVisibility(1, true);
-                lineChart.options.scales.y1.display = true;
-            } else if (viewType === 'rf') {
-                lineChart.setDatasetVisibility(0, true);
-                lineChart.setDatasetVisibility(1, false);
-                lineChart.options.scales.y1.display = false;
-            } else if (viewType === 'seismic') {
-                lineChart.setDatasetVisibility(0, false);
-                lineChart.setDatasetVisibility(1, true);
-                lineChart.options.scales.y1.display = true;
-            }
+        function changeTimeScale(scale) {
+            const selectedData = trendData[scale];
+            
+            lineChart.data.labels = selectedData.labels;
+            lineChart.data.datasets[0].data = selectedData.data.Drones;
+            lineChart.data.datasets[1].data = selectedData.data.Vehicles;
+            lineChart.data.datasets[2].data = selectedData.data.Trespassers;
+            lineChart.data.datasets[3].data = selectedData.data.Fence;
+            
             lineChart.update();
-
-            // NEW: Save the user's choice to browser memory
-            localStorage.setItem('selectedChartFilter', viewType);
+            localStorage.setItem('selectedTimeScale', scale);
         }
 
-        // NEW: Check browser memory as soon as the page reloads and apply the filter
-        window.onload = function() {
-            const savedFilter = localStorage.getItem('selectedChartFilter');
-            if (savedFilter) {
-                filterLineChart(savedFilter);
+        // Apply saved time scale on page load
+        window.addEventListener('DOMContentLoaded', (event) => {
+            const savedScale = localStorage.getItem('selectedTimeScale');
+            if (savedScale) {
+                document.getElementById('timeScaleFilter').value = savedScale;
+                changeTimeScale(savedScale);
             }
-        };
+        });
 
-        // --- BIDIRECTIONAL COMMAND & CONTROL LOGIC ---
+
+        // ==========================================
+        // 3. SYSTEM CONTROLS & REFRESH LOGIC
+        // ==========================================
         let systemActive = true;
 
         function toggleSystem() {
@@ -306,14 +279,13 @@
             if (systemActive) {
                 btn.innerHTML = "DEACTIVATE SYSTEM";
                 btn.style.backgroundColor = "#d9534f"; // Red
-                refreshCheckbox.checked = true; // Turn auto-refresh back on
+                refreshCheckbox.checked = true; 
             } else {
                 btn.innerHTML = "REACTIVATE SYSTEM";
                 btn.style.backgroundColor = "#5cb85c"; // Green
-                refreshCheckbox.checked = false; // Pause refresh so button state doesn't reset
+                refreshCheckbox.checked = false; 
             }
 
-            // Fire payload to Django
             fetch('/api/toggle-override/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -327,7 +299,6 @@
             });
         }
 
-        // Auto-refresh logic
         setInterval(function() {
             if(document.getElementById('autoRefresh').checked) {
                 window.location.reload();

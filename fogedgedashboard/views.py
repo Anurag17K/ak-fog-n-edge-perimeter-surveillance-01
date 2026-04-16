@@ -1,4 +1,5 @@
 import json
+import datetime
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -9,20 +10,14 @@ from django.conf import settings
 
 @csrf_exempt
 def ingest_data(request):
-    """
-    Handles both the AWS IoT HTTPS Destination confirmation handshake 
-    and the ingestion of real-time threat data from the Fog Node.
-    """
     if request.method == 'POST':
         try:
             payload = json.loads(request.body)
             
-            # --- 1. AWS IoT HTTPS CONFIRMATION HANDSHAKE ---
             if 'confirmationToken' in payload:
                 print(f"[SYSTEM] AWS IoT Handshake Received. Token: {payload['confirmationToken']}")
                 return JsonResponse({"status": "confirmed"}, status=200)
 
-            # --- 2. THREAT DATA INGESTION LOGIC ---
             alert_type = payload.get("alert")
             
             if alert_type and alert_type != "None":
@@ -49,45 +44,81 @@ def ingest_data(request):
     return JsonResponse({"error": "Only POST methods are allowed"}, status=405)
 
 def dashboard_view(request):
-    latest_alerts = SecurityAlert.objects.all().order_by('-timestamp')[:15]
-    chart_alerts = list(reversed(latest_alerts))
+    today = timezone.now()
     
-    time_labels = [alert.timestamp.strftime("%H:%M:%S") for alert in chart_alerts]
-    rf_data = [alert.rf_signal for alert in chart_alerts]
-    seismic_data = [alert.seismic_vib for alert in chart_alerts]
-    
-    # NEW: Extract the alert type for the line chart filtering
-    alert_types_data = [alert.alert_type for alert in chart_alerts]
+    # 1. WEEK DATA (Last 7 Days)
+    week_labels = [(today - datetime.timedelta(days=i)).strftime("%b %d") for i in range(6, -1, -1)]
+    week_data = {'Drones': [0]*7, 'Vehicles': [0]*7, 'Trespassers': [0]*7, 'Fence': [0]*7}
+    week_alerts = SecurityAlert.objects.filter(timestamp__gte=today - datetime.timedelta(days=7))
+    for a in week_alerts:
+        idx = 6 - (today.date() - a.timestamp.date()).days
+        if 0 <= idx < 7:
+            if "Drone" in a.alert_type: week_data['Drones'][idx] += 1
+            elif "Vehicle" in a.alert_type: week_data['Vehicles'][idx] += 1
+            elif "Trespass" in a.alert_type: week_data['Trespassers'][idx] += 1
+            elif "Fence" in a.alert_type: week_data['Fence'][idx] += 1
 
-    drone_count = SecurityAlert.objects.filter(alert_type="Airspace Drone Breach").count()
-    trespass_count = SecurityAlert.objects.filter(alert_type="Ground Trespass").count()
-    vehicle_count = SecurityAlert.objects.filter(alert_type="Unauthorized Vehicle Approach").count()
-    fence_count = SecurityAlert.objects.filter(alert_type="Fence Tampering / Cutting").count()
-    
+    # 2. MONTH DATA (Last 30 Days)
+    month_labels = [(today - datetime.timedelta(days=i)).strftime("%b %d") for i in range(29, -1, -1)]
+    month_data = {'Drones': [0]*30, 'Vehicles': [0]*30, 'Trespassers': [0]*30, 'Fence': [0]*30}
+    month_alerts = SecurityAlert.objects.filter(timestamp__gte=today - datetime.timedelta(days=30))
+    for a in month_alerts:
+        idx = 29 - (today.date() - a.timestamp.date()).days
+        if 0 <= idx < 30:
+            if "Drone" in a.alert_type: month_data['Drones'][idx] += 1
+            elif "Vehicle" in a.alert_type: month_data['Vehicles'][idx] += 1
+            elif "Trespass" in a.alert_type: month_data['Trespassers'][idx] += 1
+            elif "Fence" in a.alert_type: month_data['Fence'][idx] += 1
+
+    # 3. YEAR DATA (Last 12 Months)
+    year_labels = []
+    year_data = {'Drones': [0]*12, 'Vehicles': [0]*12, 'Trespassers': [0]*12, 'Fence': [0]*12}
+    for i in range(11, -1, -1):
+        target_month = (today.month - i - 1) % 12 + 1
+        target_year = today.year + ((today.month - i - 1) // 12)
+        year_labels.append(datetime.date(target_year, target_month, 1).strftime("%b %Y"))
+
+    year_alerts = SecurityAlert.objects.filter(timestamp__gte=today - datetime.timedelta(days=365))
+    for a in year_alerts:
+        month_diff = (today.year - a.timestamp.year) * 12 + today.month - a.timestamp.month
+        idx = 11 - month_diff
+        if 0 <= idx < 12:
+            if "Drone" in a.alert_type: year_data['Drones'][idx] += 1
+            elif "Vehicle" in a.alert_type: year_data['Vehicles'][idx] += 1
+            elif "Trespass" in a.alert_type: year_data['Trespassers'][idx] += 1
+            elif "Fence" in a.alert_type: year_data['Fence'][idx] += 1
+
+    # Package all trend data into one JSON object for the frontend
+    trend_payload = {
+        "week": {"labels": week_labels, "data": week_data},
+        "month": {"labels": month_labels, "data": month_data},
+        "year": {"labels": year_labels, "data": year_data}
+    }
+
+    # KPIs and Table Data
+    latest_alerts = SecurityAlert.objects.all().order_by('-timestamp')[:15]
+    drone_count = SecurityAlert.objects.filter(alert_type__icontains="Drone").count()
+    trespass_count = SecurityAlert.objects.filter(alert_type__icontains="Trespass").count()
+    vehicle_count = SecurityAlert.objects.filter(alert_type__icontains="Vehicle").count()
+    fence_count = SecurityAlert.objects.filter(alert_type__icontains="Fence").count()
     total_threats = SecurityAlert.objects.count()
-    false_alarms_filtered = total_threats * 24 
 
     context = {
         'alerts': latest_alerts,
         'doughnut_data': [drone_count, trespass_count, vehicle_count, fence_count],
-        'time_labels': time_labels,
-        'rf_data': rf_data,
-        'seismic_data': seismic_data,
-        'alert_types_data': alert_types_data, # NEW: Add this to the context
+        'trend_payload': json.dumps(trend_payload),
         'total_threats': total_threats,
-        'false_alarms': false_alarms_filtered,
-        'last_updated': timezone.now()
+        'false_alarms': total_threats * 24,
+        'last_updated': today
     }
     return render(request, 'dashboard.html', context)
 
 @csrf_exempt
 def toggle_override(request):
-    """Sends a Command & Control message down to the local Fog Node via AWS IoT."""
     if request.method == 'POST':
         try:
             payload = json.loads(request.body)
             is_active = payload.get("system_active", True)
-            
             command_message = json.dumps({"system_active": is_active})
             iot_client = boto3.client('iot-data', region_name='us-east-1')
             
@@ -99,7 +130,6 @@ def toggle_override(request):
             
             status_text = "ACTIVATED" if is_active else "DEACTIVATED"
             print(f"[COMMAND] Cloud command transmitted: System {status_text}")
-            
             return JsonResponse({"message": "Command transmitted successfully", "status": 200})
             
         except Exception as e:
