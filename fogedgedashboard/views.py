@@ -201,7 +201,7 @@ def api_get_session_data(request):
         "status": a.status,
         "rf_signal": a.rf_signal,
         "seismic_vib": a.seismic_vib
-    } for a in session_alerts[:30]] # Keep the table snappy
+    } for a in session_alerts[:30]] # Limit to last 30 for snappy UI
 
     return JsonResponse({
         'total_threats': session_alerts.count(),
