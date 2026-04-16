@@ -79,10 +79,20 @@
         <div class="box line-chart-box">
             <h3 style="margin-top: 0; color: #8b949e;">Recent Telemetry Spikes (Last 15 Events)</h3>
             
-            <div class="btn-group">
-                <button class="btn-filter active" id="btn-both" onclick="filterLineChart('both')">View Both Metrics</button>
-                <button class="btn-filter" id="btn-rf" onclick="filterLineChart('rf')">RF Signal Only</button>
-                <button class="btn-filter" id="btn-seismic" onclick="filterLineChart('seismic')">Seismic Only</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div class="btn-group" style="margin-bottom: 0;">
+                    <button class="btn-filter active" id="btn-both" onclick="filterLineChart('both')">View Both Metrics</button>
+                    <button class="btn-filter" id="btn-rf" onclick="filterLineChart('rf')">RF Signal Only</button>
+                    <button class="btn-filter" id="btn-seismic" onclick="filterLineChart('seismic')">Seismic Only</button>
+                </div>
+                
+                <select id="threatFilter" onchange="filterByThreat(this.value)" style="background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px;">
+                    <option value="All">All Threats</option>
+                    <option value="Drone">Drones</option>
+                    <option value="Trespass">Trespassers</option>
+                    <option value="Vehicle">Vehicles</option>
+                    <option value="Fence">Fence Tampering</option>
+                </select>
             </div>
 
             <canvas id="telemetryLineChart"></canvas>
@@ -272,7 +282,18 @@
                 lineChart.options.scales.y1.display = true;
             }
             lineChart.update();
+
+            // NEW: Save the user's choice to browser memory
+            localStorage.setItem('selectedChartFilter', viewType);
         }
+
+        // NEW: Check browser memory as soon as the page reloads and apply the filter
+        window.onload = function() {
+            const savedFilter = localStorage.getItem('selectedChartFilter');
+            if (savedFilter) {
+                filterLineChart(savedFilter);
+            }
+        };
 
         // --- BIDIRECTIONAL COMMAND & CONTROL LOGIC ---
         let systemActive = true;

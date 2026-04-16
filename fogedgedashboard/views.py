@@ -55,6 +55,9 @@ def dashboard_view(request):
     time_labels = [alert.timestamp.strftime("%H:%M:%S") for alert in chart_alerts]
     rf_data = [alert.rf_signal for alert in chart_alerts]
     seismic_data = [alert.seismic_vib for alert in chart_alerts]
+    
+    # NEW: Extract the alert type for the line chart filtering
+    alert_types_data = [alert.alert_type for alert in chart_alerts]
 
     drone_count = SecurityAlert.objects.filter(alert_type="Airspace Drone Breach").count()
     trespass_count = SecurityAlert.objects.filter(alert_type="Ground Trespass").count()
@@ -70,6 +73,7 @@ def dashboard_view(request):
         'time_labels': time_labels,
         'rf_data': rf_data,
         'seismic_data': seismic_data,
+        'alert_types_data': alert_types_data, # NEW: Add this to the context
         'total_threats': total_threats,
         'false_alarms': false_alarms_filtered,
         'last_updated': timezone.now()
