@@ -13,3 +13,10 @@ class SecurityAlert(models.Model):
 
     def __str__(self):
         return f"{self.timestamp} - {self.alert_type}"
+    
+class EdgeMetric(models.Model):
+    timestamp = models.DateTimeField(auto_now_add=True)
+    dropped_count = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"Heartbeat: {self.dropped_count} dropped alerts at {self.timestamp}"

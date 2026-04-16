@@ -3,11 +3,11 @@ import datetime
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import SecurityAlert
+from .models import SecurityAlert, EdgeMetric
 from django.utils import timezone
 import boto3
 from django.conf import settings
-
+from django.db.models import Sum
 
 @csrf_exempt
 def ingest_data(request):
@@ -16,9 +16,18 @@ def ingest_data(request):
             payload = json.loads(request.body)
             
             if 'confirmationToken' in payload:
-                print(f"[SYSTEM] AWS IoT Handshake Received. Token: {payload['confirmationToken']}")
                 return JsonResponse({"status": "confirmed"}, status=200)
 
+            # --- NEW: Catch the Heartbeat Payload ---
+            payload_type = payload.get("payload_type")
+            if payload_type == "heartbeat":
+                dropped = payload.get("dropped_alarms", 0)
+                from .models import EdgeMetric # Import at top of file ideally
+                EdgeMetric.objects.create(dropped_count=dropped)
+                print(f"[METRICS] Logged {dropped} dropped alarms from Edge.")
+                return JsonResponse({"message": "Heartbeat logged"}, status=200)
+
+            # --- EXISTING: Threat Data Ingestion Logic ---
             alert_type = payload.get("alert")
             
             if alert_type and alert_type != "None":
@@ -110,6 +119,11 @@ def get_dashboard_metrics():
 
     total_threats = SecurityAlert.objects.count()
 
+    # --- NEW: Calculate actual false alarms ---
+    # This sums up the 'dropped_count' column across all EdgeMetric rows
+    metrics_aggregate = EdgeMetric.objects.aggregate(total_dropped=Sum('dropped_count'))
+    actual_false_alarms = metrics_aggregate['total_dropped'] or 0
+
     return {
         'alerts_queryset': latest_alerts, # Used by the initial HTML render
         'alerts_json': alerts_list,       # Used by the AJAX poll
@@ -121,8 +135,9 @@ def get_dashboard_metrics():
         ],
         'trend_payload': trend_payload,
         'total_threats': total_threats,
-        'false_alarms': total_threats * 24,
+        'false_alarms': actual_false_alarms,
         'last_updated': today.strftime("%H:%M:%S")
+        
     }
 
 # ==========================================
