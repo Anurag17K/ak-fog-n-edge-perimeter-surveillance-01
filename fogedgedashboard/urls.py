@@ -6,5 +6,5 @@ urlpatterns = [
     path('ingest/', views.ingest_data, name='ingest_data'),
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('toggle-override/', views.toggle_override, name='toggle_override'),
-    path('api/get-dashboard-data/', views.api_get_dashboard_data, name='get_dashboard_data'),
+    path('get-dashboard-data/', views.api_get_dashboard_data, name='get_dashboard_data'),
 ]

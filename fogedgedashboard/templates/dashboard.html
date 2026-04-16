@@ -392,7 +392,7 @@
                 refreshCheckbox.checked = false; 
             }
 
-            fetch('/api/toggle-override/', {
+            fetch('{% url "toggle_override" %}', {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json' 
@@ -413,7 +413,7 @@
         setInterval(() => {
             if(document.getElementById('autoRefresh').checked) {
                 
-                fetch('/api/get-dashboard-data/')
+                fetch('{% url "get_dashboard_data" %}')
                     .then(response => response.json())
                     .then(newData => {
                         // 1. Update global variables & text elements
