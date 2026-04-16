@@ -178,3 +178,36 @@ def toggle_override(request):
             return JsonResponse({"error": str(e)}, status=500)
             
     return JsonResponse({"error": "Invalid request"}, status=400)
+
+@csrf_exempt
+def api_get_session_data(request):
+    """Feeds the live sub-dashboard with data strictly after a given timestamp."""
+    since_ts = request.GET.get('since')
+    if not since_ts:
+        return JsonResponse({"error": "Missing timestamp"}, status=400)
+        
+    try:
+        # Convert the JavaScript timestamp (milliseconds) to a Python aware datetime
+        dt = datetime.datetime.fromtimestamp(int(since_ts) / 1000.0, tz=timezone.utc)
+    except ValueError:
+        return JsonResponse({"error": "Invalid timestamp"}, status=400)
+
+    # Filter alerts that happened AFTER the button was clicked
+    session_alerts = SecurityAlert.objects.filter(timestamp__gte=dt).order_by('-timestamp')
+    
+    alerts_json = [{
+        "timestamp": a.timestamp.strftime("%H:%M:%S"),
+        "alert_type": a.alert_type,
+        "status": a.status,
+        "rf_signal": a.rf_signal,
+        "seismic_vib": a.seismic_vib
+    } for a in session_alerts[:30]] # Keep the table snappy
+
+    return JsonResponse({
+        'total_threats': session_alerts.count(),
+        'drones': session_alerts.filter(alert_type__icontains="Drone").count(),
+        'vehicles': session_alerts.filter(alert_type__icontains="Vehicle").count(),
+        'trespass': session_alerts.filter(alert_type__icontains="Trespass").count(),
+        'fence': session_alerts.filter(alert_type__icontains="Fence").count(),
+        'alerts': alerts_json
+    })

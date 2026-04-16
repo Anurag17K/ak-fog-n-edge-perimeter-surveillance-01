@@ -75,7 +75,7 @@
             flex-wrap: wrap;
         }
 
-        .timestamp { color: var(--text-muted); font-size: 14px; }
+        .timestamp { color: var(--text-muted); font-size: 14px; margin-right: auto; }
         .timestamp strong { color: var(--text-main); }
 
         /* Buttons & Inputs */
@@ -90,6 +90,8 @@
         .btn:hover { opacity: 0.8; }
         .btn-danger { background-color: #d9534f; color: white; }
         .btn-success { background-color: var(--accent-green); color: white; }
+        .btn-blue { background-color: var(--accent-blue); color: white; }
+        .btn-yellow { background-color: var(--accent-yellow); color: #000; }
 
         .select-input {
             background: #21262d; 
@@ -101,7 +103,7 @@
             font-size: 13px;
         }
 
-        .toggle-label { font-size: 14px; color: var(--text-muted); cursor: pointer; }
+        .toggle-label { font-size: 14px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 5px; }
 
         /* Table Styles */
         .table-responsive { overflow-x: auto; }
@@ -137,6 +139,26 @@
         .flex-between { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
         .chart-container { position: relative; height: 300px; width: 100%; }
         .doughnut-container { position: relative; height: 250px; width: 100%; display: flex; justify-content: center; }
+
+        /* Sub-Dashboard Modal */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(13, 17, 23, 0.95); z-index: 1000; padding: 40px;
+            backdrop-filter: blur(5px); overflow-y: auto;
+        }
+        .modal-content {
+            background: var(--bg-card); border: 1px solid var(--accent-blue);
+            border-radius: 8px; max-width: 1000px; margin: 0 auto; padding: 20px;
+            box-shadow: 0 0 20px rgba(88, 166, 255, 0.2);
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px; }
+        .modal-header h2 { margin: 0; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .live-dot { height: 12px; width: 12px; background-color: #ff7b72; border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 123, 114, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(255, 123, 114, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 123, 114, 0); } }
+        .modal-stats { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .stat-pill { background: var(--bg-main); padding: 15px; border-radius: 6px; border: 1px solid var(--border-color); flex: 1; text-align: center; min-width: 120px; }
+        .stat-pill h4 { margin: 0 0 5px 0; color: var(--text-muted); font-size: 12px; }
+        .stat-pill span { font-size: 28px; font-weight: bold; color: var(--text-main); }
     </style>
 </head>
 <body>
@@ -148,6 +170,14 @@
                  Last Updated: <strong>{{ last_updated }}</strong>
             </span>
             
+            <button class="btn btn-blue" onclick="startTestSession()">
+                START TEST RUN
+            </button>
+            
+            <button class="btn btn-yellow" onclick="archiveAndReset()">
+                ARCHIVE & RESET
+            </button>
+
             <button id="overrideBtn" class="btn btn-danger" onclick="toggleSystem()">
                 DEACTIVATE SYSTEM
             </button>
@@ -162,11 +192,11 @@
         <section class="grid-row kpi-grid">
             <article class="card kpi-card">
                 <h3>Total Critical Threats Processed</h3>
-                <h1 class="highlight-red">{{ total_threats }}</h1>
+                <h1 class="highlight-red" id="mainTotalThreats">{{ total_threats }}</h1>
             </article>
             <article class="card kpi-card">
                 <h3>False Alarms Filtered Locally at Edge</h3>
-                <h1 class="highlight-green">{{ false_alarms }}</h1>
+                <h1 class="highlight-green" id="mainFalseAlarms">{{ false_alarms }}</h1>
             </article>
         </section>
         
@@ -244,9 +274,42 @@
 
     </main>
 
+    <div id="testSessionModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><span class="live-dot"></span> LIVE INCOMING DATA (Isolated Session)</h2>
+                <button class="btn btn-danger" onclick="endTestSession()">END SESSION</button>
+            </div>
+            
+            <div class="modal-stats">
+                <div class="stat-pill"><h4>TOTAL INCOMING</h4><span id="subTotal" class="highlight-red">0</span></div>
+                <div class="stat-pill"><h4>DRONES</h4><span id="subDrones" style="color: var(--accent-blue);">0</span></div>
+                <div class="stat-pill"><h4>VEHICLES</h4><span id="subVehicles" style="color: var(--accent-red);">0</span></div>
+                <div class="stat-pill"><h4>TRESPASSERS</h4><span id="subTrespass" style="color: var(--accent-yellow);">0</span></div>
+                <div class="stat-pill"><h4>FENCE TAMPERING</h4><span id="subFence" style="color: var(--accent-orange);">0</span></div>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Threat Classification</th>
+                            <th>Automated Edge Action</th>
+                            <th>RF (dBm)</th>
+                            <th>Seismic (G)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subAlertsTableBody">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ==========================================
-        // 1. DOUGHNUT CHART & DRILL-DOWN LOGIC
+        // 1. DOUGHNUT CHART LOGIC
         // ==========================================
         let doughnutData = {{ doughnut_data|safe }};
         const threatLabels = ['Drones', 'Trespassers', 'Vehicles', 'Fence Tampering'];
@@ -322,7 +385,7 @@
         }
 
         // ==========================================
-        // 2. MULTI-SCALE TREND CHART LOGIC
+        // 2. LINE CHART LOGIC
         // ==========================================
         let trendData = {{ trend_payload|safe }};
         const ctxLine = document.getElementById('telemetryLineChart').getContext('2d');
@@ -363,7 +426,6 @@
             localStorage.setItem('selectedTimeScale', scale);
         }
 
-        // Apply saved time scale on page load
         window.addEventListener('DOMContentLoaded', () => {
             const savedScale = localStorage.getItem('selectedTimeScale');
             if (savedScale && trendData[savedScale]) {
@@ -373,7 +435,7 @@
         });
 
         // ==========================================
-        // 3. SYSTEM CONTROLS & AJAX POLLING LOGIC
+        // 3. SYSTEM CONTROLS & ARCHIVE
         // ==========================================
         let systemActive = true;
 
@@ -394,14 +456,9 @@
 
             fetch('{% url "toggle_override" %}', {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json' 
-                    // 'X-CSRFToken': getCookie('csrftoken') // Uncomment if using Django CSRF token middleware
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ system_active: systemActive })
             })
-            .then(response => response.json())
-            .then(data => console.log("Cloud responded:", data))
             .catch(error => {
                 console.error("Error sending command:", error);
                 alert("Failed to send command to Cloud.");
@@ -409,26 +466,71 @@
             });
         }
 
-        // The AJAX Auto-Refresh (No more page reloads!)
+        function archiveAndReset() {
+            if (confirm("Are you sure you want to archive current logs and reset the dashboard?")) {
+                fetch('{% url "archive_reset" %}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.status === 200) {
+                        alert(data.message);
+                    } else {
+                        alert("Error: " + data.error);
+                    }
+                })
+                .catch(error => console.error("Error archiving:", error));
+            }
+        }
+
+        // ==========================================
+        // 4. SUB-DASHBOARD (ISOLATED LIVE TESTING)
+        // ==========================================
+        let sessionStartTime = null;
+        let isSessionActive = false;
+
+        function startTestSession() {
+            sessionStartTime = Date.now(); 
+            isSessionActive = true;
+            
+            document.getElementById('subTotal').innerText = '0';
+            document.getElementById('subDrones').innerText = '0';
+            document.getElementById('subVehicles').innerText = '0';
+            document.getElementById('subTrespass').innerText = '0';
+            document.getElementById('subFence').innerText = '0';
+            document.getElementById('subAlertsTableBody').innerHTML = '';
+            
+            document.getElementById('testSessionModal').style.display = 'block';
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        function endTestSession() {
+            isSessionActive = false;
+            sessionStartTime = null;
+            document.getElementById('testSessionModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // ==========================================
+        // 5. MASTER AJAX POLLING
+        // ==========================================
         setInterval(() => {
+            // A. Update Main Dashboard
             if(document.getElementById('autoRefresh').checked) {
-                
                 fetch('{% url "get_dashboard_data" %}')
                     .then(response => response.json())
                     .then(newData => {
-                        // 1. Update global variables & text elements
                         trendData = newData.trend_payload;
                         totalIncidents = newData.doughnut_data.reduce((a, b) => a + b, 0);
 
                         document.querySelector('.timestamp strong').innerText = newData.last_updated;
-                        document.querySelector('.highlight-red').innerText = newData.total_threats;
-                        document.querySelector('.highlight-green').innerText = newData.false_alarms;
+                        document.getElementById('mainTotalThreats').innerText = newData.total_threats;
+                        document.getElementById('mainFalseAlarms').innerText = newData.false_alarms;
 
-                        // 2. Update Doughnut Chart (smooth animation)
                         doughnutChart.data.datasets[0].data = newData.doughnut_data;
                         doughnutChart.update();
 
-                        // 3. Update Line Chart based on currently selected filter
                         const currentScale = document.getElementById('timeScaleFilter').value;
                         const selectedData = newData.trend_payload[currentScale];
                         
@@ -439,9 +541,8 @@
                         lineChart.data.datasets[3].data = selectedData.data.Fence;
                         lineChart.update(); 
 
-                        // 4. Update the Table
                         const tbody = document.getElementById('alertsTableBody');
-                        tbody.innerHTML = ''; // Clear current rows
+                        tbody.innerHTML = ''; 
                         
                         newData.alerts.forEach(alert => {
                             let tagClass = 'tag-fence';
@@ -460,7 +561,41 @@
                             tbody.appendChild(tr);
                         });
                     })
-                    .catch(error => console.error("Error fetching live data:", error));
+                    .catch(error => console.error("Error fetching main data:", error));
+            }
+
+            // B. Update Sub-Dashboard (if active)
+            if (isSessionActive && sessionStartTime) {
+                fetch(`{% url "get_session_data" %}?since=${sessionStartTime}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('subTotal').innerText = data.total_threats;
+                        document.getElementById('subDrones').innerText = data.drones;
+                        document.getElementById('subVehicles').innerText = data.vehicles;
+                        document.getElementById('subTrespass').innerText = data.trespass;
+                        document.getElementById('subFence').innerText = data.fence;
+
+                        const tbody = document.getElementById('subAlertsTableBody');
+                        tbody.innerHTML = ''; 
+                        
+                        data.alerts.forEach(alert => {
+                            let tagClass = 'tag-fence';
+                            if (alert.alert_type.includes('Drone')) tagClass = 'tag-drone';
+                            else if (alert.alert_type.includes('Trespass')) tagClass = 'tag-trespass';
+                            else if (alert.alert_type.includes('Vehicle')) tagClass = 'tag-vehicle';
+
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td class="td-muted">${alert.timestamp}</td>
+                                <td><span class="tag ${tagClass}">${alert.alert_type}</span></td>
+                                <td>${alert.status}</td>
+                                <td class="td-mono">${alert.rf_signal}</td>
+                                <td class="td-mono">${alert.seismic_vib}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    })
+                    .catch(error => console.error("Error fetching sub-dashboard data:", error));
             }
         }, 5000);
     </script>
