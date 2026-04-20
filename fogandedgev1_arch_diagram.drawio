@@ -1,0 +1,133 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="l_mtSZrRFdgN47hHkgTa">
+    <mxGraphModel dx="461" dy="1947" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-64" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=none;strokeColor=light-dark(#000000,#000000);fontColor=light-dark(#333333,#cccccc);" value="Cloud Backend Tier" vertex="1">
+          <mxGeometry height="304" width="638" x="2143" y="273" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-65" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=none;strokeColor=light-dark(#000000,#000000);fontColor=light-dark(#333333,#cccccc);" value="Cloud Gateway Tier (AWS IoT)" vertex="1">
+          <mxGeometry height="192.5" width="526" x="2412" y="-80" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-66" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=none;strokeColor=light-dark(#000000,#000000);fontColor=light-dark(#333333,#cccccc);" value="Fog Tier (Local Network)" vertex="1">
+          <mxGeometry height="254.5" width="510" x="1790" y="-80" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-67" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=none;strokeColor=light-dark(#000000,#000000);fontColor=light-dark(#333333,#cccccc);" value="Edge Tier (Physical Perimeter)" vertex="1">
+          <mxGeometry height="378.5" width="208" x="1499.5" y="-80" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-68" parent="1" style="rounded=1;whiteSpace=wrap;arcSize=50;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Drone Sensors" vertex="1">
+          <mxGeometry height="39" width="125" x="1541.5" y="-42.5" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-69" parent="1" style="rounded=1;whiteSpace=wrap;arcSize=50;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Vehicle Sensors" vertex="1">
+          <mxGeometry height="39" width="134" x="1536.5" y="46.5" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-70" parent="1" style="rounded=1;whiteSpace=wrap;arcSize=50;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Trespass Sensors" vertex="1">
+          <mxGeometry height="39" width="142" x="1532.5" y="135.5" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-71" parent="1" style="rounded=1;whiteSpace=wrap;arcSize=50;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Fence Sensors" vertex="1">
+          <mxGeometry height="39" width="125" x="1540.5" y="224.5" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-72" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Fog Node Brain" vertex="1">
+          <mxGeometry height="54" width="168" x="1804.5" y="70.5" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-93" edge="1" parent="1" source="AFdnXbf0_4YI-maHXJYC-73" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=light-dark(#000000,#000000);" target="AFdnXbf0_4YI-maHXJYC-65" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2368.5" y="16" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-73" parent="1" style="rhombus;strokeWidth=2;whiteSpace=wrap;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Threshold &#xa; Logic Filter" vertex="1">
+          <mxGeometry height="159" width="159" x="2100" y="-63" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-75" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="AWS IoT Core Broker" vertex="1">
+          <mxGeometry height="54" width="206" x="2437" y="-9.5" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-76" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="HTTPS Destination Rule" vertex="1">
+          <mxGeometry height="54" width="220" x="2693" y="-9.5" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-77" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Django Web Application" vertex="1">
+          <mxGeometry height="54" width="230" x="2168" y="376" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-78" parent="1" style="shape=cylinder3;boundedLbl=1;backgroundOutline=1;size=10;strokeWidth=2;whiteSpace=wrap;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="PostgreSQL RDS &#xa; Alerts &amp;amp; EdgeMetrics" vertex="1">
+          <mxGeometry height="106" width="164" x="2593" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-79" parent="1" style="ellipse;aspect=fixed;strokeWidth=2;whiteSpace=wrap;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="SOC Dashboard &#xa; Users" vertex="1">
+          <mxGeometry height="202" width="202" x="1630" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-80" edge="1" parent="1" source="AFdnXbf0_4YI-maHXJYC-68" style="startArrow=none;endArrow=block;exitX=0.99;exitY=0.5;entryX=0.36;entryY=0;rounded=0;edgeStyle=orthogonalEdgeStyle;labelBackgroundColor=none;strokeColor=light-dark(#000000,#000000);" target="AFdnXbf0_4YI-maHXJYC-72" value="Raw UDP">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-81" edge="1" parent="1" source="AFdnXbf0_4YI-maHXJYC-69" style="startArrow=none;endArrow=block;exitX=1;exitY=0.5;entryX=0.05;entryY=0;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=light-dark(#000000,#000000);" target="AFdnXbf0_4YI-maHXJYC-72" value="Raw UDP">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-82" edge="1" parent="1" source="AFdnXbf0_4YI-maHXJYC-70" style="startArrow=none;endArrow=block;exitX=1;exitY=0.5;entryX=0.15;entryY=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=light-dark(#000000,#000000);" target="AFdnXbf0_4YI-maHXJYC-72" value="Raw UDP">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-83" edge="1" parent="1" source="AFdnXbf0_4YI-maHXJYC-71" style="startArrow=none;endArrow=block;exitX=1;exitY=0.5;entryX=0.38;entryY=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=light-dark(#000000,#000000);" target="AFdnXbf0_4YI-maHXJYC-72" value="Raw UDP">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-84" edge="1" parent="1" source="AFdnXbf0_4YI-maHXJYC-72" style="startArrow=none;endArrow=block;exitX=1;exitY=0.5;entryX=0;entryY=0.5;rounded=0;edgeStyle=orthogonalEdgeStyle;fontColor=light-dark(#000000,#000000);strokeColor=light-dark(#000000,#000000);" target="AFdnXbf0_4YI-maHXJYC-73" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2040" y="97" />
+              <mxPoint x="2040" y="17" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-88" edge="1" parent="1" source="AFdnXbf0_4YI-maHXJYC-75" style="startArrow=none;endArrow=block;exitX=1;exitY=0.5;entryX=0;entryY=0.5;rounded=0;edgeStyle=orthogonalEdgeStyle;" target="AFdnXbf0_4YI-maHXJYC-76" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-89" edge="1" parent="1" source="AFdnXbf0_4YI-maHXJYC-76" style="startArrow=none;endArrow=block;exitX=1;exitY=0.5;entryX=0.31;entryY=0;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=light-dark(#000000,#000000);" target="AFdnXbf0_4YI-maHXJYC-77" value="HTTPS POST &#xa; (Threats &amp;amp; Heartbeats)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-90" edge="1" parent="1" source="AFdnXbf0_4YI-maHXJYC-77" style="curved=1;startArrow=none;endArrow=block;exitX=1;exitY=0.5;entryX=0;entryY=0.5;rounded=0;strokeColor=light-dark(#000000,#000000);" target="AFdnXbf0_4YI-maHXJYC-78" value="Django ORM Queries">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-91" edge="1" parent="1" source="AFdnXbf0_4YI-maHXJYC-79" style="startArrow=block;endArrow=block;exitX=1;exitY=0.5;entryX=0.32;entryY=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=light-dark(#000000,#000000);" target="AFdnXbf0_4YI-maHXJYC-77" value="View Live Metrics &amp;amp;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-96" parent="1" style="image;aspect=fixed;perimeter=ellipsePerimeter;html=1;align=center;shadow=0;dashed=0;fontColor=#4277BB;labelBackgroundColor=default;fontSize=12;spacingTop=3;image=img/lib/ibm/users/sensor.svg;" value="" vertex="1">
+          <mxGeometry height="60" width="60" x="1489.5" y="-53" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-97" parent="1" style="image;aspect=fixed;perimeter=ellipsePerimeter;html=1;align=center;shadow=0;dashed=0;fontColor=#4277BB;labelBackgroundColor=default;fontSize=12;spacingTop=3;image=img/lib/ibm/users/sensor.svg;" value="" vertex="1">
+          <mxGeometry height="60" width="60" x="1489.5" y="36" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-98" parent="1" style="image;aspect=fixed;perimeter=ellipsePerimeter;html=1;align=center;shadow=0;dashed=0;fontColor=#4277BB;labelBackgroundColor=default;fontSize=12;spacingTop=3;image=img/lib/ibm/users/sensor.svg;" value="" vertex="1">
+          <mxGeometry height="60" width="60" x="1489.5" y="125" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-99" parent="1" style="image;aspect=fixed;perimeter=ellipsePerimeter;html=1;align=center;shadow=0;dashed=0;fontColor=#4277BB;labelBackgroundColor=default;fontSize=12;spacingTop=3;image=img/lib/ibm/users/sensor.svg;" value="" vertex="1">
+          <mxGeometry height="60" width="60" x="1489.5" y="214" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-104" parent="1" style="image;aspect=fixed;perimeter=ellipsePerimeter;html=1;align=center;shadow=0;dashed=0;spacingTop=3;image=img/lib/active_directory/generic_node.svg;" value="" vertex="1">
+          <mxGeometry height="49" width="50" x="1863.5" y="112.5" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-106" parent="1" style="verticalLabelPosition=bottom;sketch=0;aspect=fixed;html=1;verticalAlign=top;strokeColor=none;align=center;outlineConnect=0;shape=mxgraph.citrix.process;" value="" vertex="1">
+          <mxGeometry height="91.21" width="76.5" x="2141.25" y="44.5" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-108" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=#ffffff;fillColor=#232F3E;dashed=0;verticalLabelPosition=middle;verticalAlign=bottom;align=center;html=1;whiteSpace=wrap;fontSize=10;fontStyle=1;spacing=3;shape=mxgraph.aws4.productIcon;prIcon=mxgraph.aws4.iot_core;" value="Amazon IoT Core" vertex="1">
+          <mxGeometry height="98" width="70" x="2410" y="-21" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-109" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=#232F3E;fillColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.rule;" value="Rule" vertex="1">
+          <mxGeometry height="40" width="40" x="2873" y="-2.5" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-110" parent="1" style="points=[];aspect=fixed;html=1;align=center;shadow=0;dashed=0;fillColor=#FF6A00;strokeColor=none;shape=mxgraph.alibaba_cloud.elastic_web_hosting;" value="" vertex="1">
+          <mxGeometry height="61.3" width="63.81" x="2251.0899999999997" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-111" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#C925D1;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.rds_instance;" value="" vertex="1">
+          <mxGeometry height="78" width="78" x="2636" y="456" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-112" parent="1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/other/Azure_Monitor_Dashboard.svg;" value="" vertex="1">
+          <mxGeometry height="63.2" width="68" x="1697" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-113" parent="1" style="points=[];aspect=fixed;html=1;align=center;shadow=0;dashed=0;fillColor=#FF6A00;strokeColor=none;shape=mxgraph.alibaba_cloud.domain;" value="" vertex="1">
+          <mxGeometry height="27.45" width="27.45" x="1979.28" y="382.55" as="geometry" />
+        </mxCell>
+        <mxCell id="AFdnXbf0_4YI-maHXJYC-114" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontColor=light-dark(default, #cd6a18);fontStyle=1" value="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 128, 0));&quot;&gt;https://fog.anuragktech.me/api/dashboard/&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="1963" y="410" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
